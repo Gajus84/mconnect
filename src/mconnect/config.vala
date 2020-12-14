@@ -76,6 +76,18 @@ public class Config : Object {
         }
     }
 
+    public string[] list_commands () {
+        if (_kf.has_group("commands")) {
+            return _kf.get_keys("commands");
+        } else {
+            return {};
+        }
+    }
+
+    public string get_command (string key) {
+        return _kf.get_string("commands", key);
+    }
+
     public bool is_device_allowed (string name, string type) {
 
         debug ("check if device %s type %s is allowed", name, type);

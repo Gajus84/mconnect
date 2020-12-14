@@ -16,23 +16,23 @@
  * Maciek Borzecki <maciek.borzecki (at] gmail.com>
  */
 
-class PingHandler : Object, PacketHandlerInterface {
+class ClipboardHandler : Object, PacketHandlerInterface {
 
-    public const string PING = "kdeconnect.ping";
+    public const string CLIPBOARD = "kdeconnect.clipboard";
 
     public string get_pkt_type () {
-        return PING;
+        return CLIPBOARD;
     }
 
-    private PingHandler () {
+    private ClipboardHandler () {
     }
 
-    public static PingHandler instance () {
-        return new PingHandler ();
+    public static ClipboardHandler instance () {
+        return new ClipboardHandler ();
     }
 
     public void use_device (Device dev) {
-        debug ("use device %s for ping", dev.to_string ());
+        debug ("use device %s for Clipboard sharing", dev.to_string ());
         dev.message.connect (this.message);
     }
 
@@ -42,18 +42,18 @@ class PingHandler : Object, PacketHandlerInterface {
     }
 
     public void message (Device dev, Packet pkt) {
-        if (pkt.pkt_type != PING) {
+        if (pkt.pkt_type != CLIPBOARD) {
             return;
         }
-
-        GLib.message ("ping from device %s", dev.to_string ());
-        ping (dev);
+        
+        string text  = pkt.body.get_string_member("content");
+        debug ("got clipboard text '%s'", text);
+        var display = Gdk.Display.get_default ();
+        if (display != null) {
+            var cb = Gtk.Clipboard.get_default (display);
+            cb.set_text (text, -1);
+            Utils.show_own_notification ("Text copied to clipboard",
+                                         dev.device_name);
+        }
     }
-
-    public void send_ping (Device dev) {
-        var pkt = new Packet (PING, new Json.Object ());
-        dev.send (pkt);
-    }
-
-    public signal void ping (Device dev);
 }

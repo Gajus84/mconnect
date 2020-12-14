@@ -8,7 +8,10 @@ gio_unix_dep = dependency('gio-unix-2.0')
 json_glib_dep = dependency('json-glib-1.0')
 gee_dep = dependency('gee-0.8')
 libnotify_dep = dependency('libnotify')
+xtst_dep = dependency('xtst')
 gdk_dep = dependency('gdk-3.0')
+gdk_x11_dep = dependency('gdk-x11-3.0')
+x11_dep = dependency('x11')
 gtk_dep = dependency('gtk+-3.0')
 atspi_dep = dependency('atspi-2')
 gnutls_dep = dependency('gnutls')
@@ -31,6 +34,7 @@ mconnect_src = [
 	'src/mconnect/devicemanager-proxy.vala',
 	'src/mconnect/devicechannel.vala',
 	'src/mconnect/core.vala',
+	'src/mconnect/clipboard.vala',
 	'src/mconnect/packethandlerinterface.vala',
 	'src/mconnect/packethandlerinterface-proxy.vala',
 	'src/mconnect/packethandlers.vala',
@@ -41,6 +45,7 @@ mconnect_src = [
 	'src/mconnect/telephony.vala',
 	'src/mconnect/telephony-proxy.vala',
 	'src/mconnect/mousepad.vala',
+	'src/mconnect/runcommand.vala',
 	'src/mconnect/ping.vala',
 	'src/mconnect/ping-proxy.vala',
 	'src/mconnect/config.vala',
@@ -67,6 +72,8 @@ mconnect_prog = executable('mconnect', mconnect_src,
                                            gio_dep, gio_unix_dep,
                                            json_glib_dep, gee_dep,
                                            libnotify_dep, gdk_dep,
+                                           xtst_dep, gdk_x11_dep,
+                                           x11_dep,
                                            atspi_dep, gnutls_dep,
                                            posix_dep, gtk_dep],
                            install: true)

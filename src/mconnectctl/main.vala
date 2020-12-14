@@ -59,6 +59,7 @@ namespace Mconnect {
         private delegate int CommandFunc (string[] args);
 
         public static int main (string[] args) {
+            Intl.setlocale(LocaleCategory.ALL, "");
             try {
                 var opt_context = new OptionContext ();
                 opt_context.set_description (

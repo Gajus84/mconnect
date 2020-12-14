@@ -20,8 +20,42 @@ class MousepadHandler : Object, PacketHandlerInterface {
 
     public const string MOUSEPAD = "kdeconnect.mousepad.request";
     public const string MOUSEPAD_PACKET = "kdeconnect.mousepad";
-
-    private Gdk.Display _display;
+    private unowned X.Display _display;
+    private uint[] SpecialKeysMap = {
+                0,                   // Invalid
+                Gdk.Key.BackSpace,   // 1
+                Gdk.Key.Tab,         // 2
+                Gdk.Key.Linefeed,    // 3
+                Gdk.Key.Left,        // 4
+                Gdk.Key.Up,          // 5
+                Gdk.Key.Right,       // 6
+                Gdk.Key.Down,        // 7
+                Gdk.Key.Page_Up,     // 8
+                Gdk.Key.Page_Down,   // 9
+                Gdk.Key.Home,        // 10
+                Gdk.Key.End,         // 11
+                Gdk.Key.Return,      // 12
+                Gdk.Key.Delete,      // 13
+                Gdk.Key.Escape,      // 14
+                Gdk.Key.Sys_Req,     // 15
+                Gdk.Key.Scroll_Lock, // 16
+                0,                   // 17
+                0,                   // 18
+                0,                   // 19
+                0,                   // 20
+                Gdk.Key.F1,          // 21
+                Gdk.Key.F2,          // 22
+                Gdk.Key.F3,          // 23
+                Gdk.Key.F4,          // 24
+                Gdk.Key.F5,          // 25
+                Gdk.Key.F6,          // 26
+                Gdk.Key.F7,          // 27
+                Gdk.Key.F8,          // 28
+                Gdk.Key.F9,          // 29
+                Gdk.Key.F10,         // 30
+                Gdk.Key.F11,         // 31
+                Gdk.Key.F12,         // 32
+            };
 
     public string get_pkt_type () {
         return MOUSEPAD;
@@ -32,16 +66,14 @@ class MousepadHandler : Object, PacketHandlerInterface {
 
     public static MousepadHandler instance () {
         var ms = new MousepadHandler ();
-
-        if (Atspi.init () > 1) {
-            warning ("failed to initialize AT-SPI");
-        }
-        ms._display = Gdk.Display.get_default ();
+        ms._display = Gdk.X11.get_default_xdisplay ();
         if (ms._display == null) {
             warning ("failed to obtain display");
         }
         return ms;
     }
+
+
 
     public void use_device (Device dev) {
         debug ("use device %s for mouse/keyboard input", dev.to_string ());
@@ -59,6 +91,19 @@ class MousepadHandler : Object, PacketHandlerInterface {
         }
 
         debug ("got mousepad packet");
+        bool ctrl  = pkt.body.has_member("ctrl")  ? pkt.body.get_boolean_member("ctrl")  : false;
+        bool alt   = pkt.body.has_member("alt")   ? pkt.body.get_boolean_member("alt")   : false;
+        bool shift = pkt.body.has_member("shift") ? pkt.body.get_boolean_member("shift") : false;
+        bool meta  = pkt.body.has_member("meta")  ? pkt.body.get_boolean_member("meta")  : false;
+
+        Gdk.ModifierType mask = 0;
+        if (ctrl)  mask |= Gdk.ModifierType.CONTROL_MASK;
+        if (shift) mask |= Gdk.ModifierType.SHIFT_MASK;
+        if (alt)   mask |= Gdk.ModifierType.MOD1_MASK;  // Alt key
+        if (meta)  mask |= Gdk.ModifierType.META_MASK;  // Super key
+
+        warning("ctrl %s alt %s shift %s meta %s", ctrl.to_string(), alt.to_string(), shift.to_string(), meta.to_string());
+
 
         if (_display == null) {
             warning ("display not initialized");
@@ -101,65 +146,56 @@ class MousepadHandler : Object, PacketHandlerInterface {
         } else if (pkt.body.has_member ("key")) {
             string key = pkt.body.get_string_member ("key");
             debug ("got key: %s", key);
-            send_key (key);
+            unichar c;
+            for (int i = 0; key.get_next_char (ref i, out c);) {
+                        uint keysym = Gdk.unicode_to_keyval(c);
+                        send_key (keysym, mask);
+            }
         } else if (pkt.body.has_member ("specialKey")) {
             var keynum = pkt.body.get_int_member ("specialKey");
-            debug ("got special key: %s", keynum.to_string ());
-            send_keysym ((uint) keynum);
+            if (keynum < SpecialKeysMap.length) {
+                var keysym = SpecialKeysMap[keynum];
+                if (keysym != 0) {
+                    debug ("got special key: %s", keynum.to_string ());
+                    send_key ((uint) keysym, mask);
+                }
+            }
+        }
+    }
+
+    private void send_modifiersevent(Gdk.ModifierType flags, bool is_press) {
+        if (Gdk.ModifierType.SHIFT_MASK in flags) {
+            XTest.fake_key_event(_display, _display.keysym_to_keycode(Gdk.Key.Shift_L), is_press, 0);
+        }
+        if (Gdk.ModifierType.CONTROL_MASK in flags) {
+            XTest.fake_key_event(_display, _display.keysym_to_keycode(Gdk.Key.Control_L), is_press, 0);
+        }
+        if (Gdk.ModifierType.MOD1_MASK in flags) {  // Alt key
+            XTest.fake_key_event(_display, _display.keysym_to_keycode(Gdk.Key.Alt_L), is_press, 0);
+        }
+        if (Gdk.ModifierType.META_MASK in flags) {  // Meta key
+            XTest.fake_key_event(_display, _display.keysym_to_keycode(Gdk.Key.Meta_L), is_press, 0);
         }
     }
 
     private void move_cursor_relative (double dx, double dy) {
-        try {
-            Atspi.generate_mouse_event ((long) dx, (long) dy, "rel");
-        } catch (Error e) {
-            warning ("failed to generate mouse move event: %s", e.message);
-        }
+        XTest.fake_relative_motion_event(_display, (int)dx, (int)dy, 0);
     }
 
     private void send_click (int button, bool doubleclick = false) {
-        var etype = "b%ic".printf (button);
-        try {
-            int x, y;
-            _display.get_pointer (null, out x, out y, null);
-            Atspi.generate_mouse_event (x, y, etype);
-            if (doubleclick) {
-                Atspi.generate_mouse_event (x, y, etype);
-            }
-        } catch (Error e) {
-            warning ("failed to generate mouse click event: %s", e.message);
+        XTest.fake_button_event(_display, button, true, 0);
+        XTest.fake_button_event(_display, button, false, 0);
+        if (doubleclick) {
+            XTest.fake_button_event(_display, button, true, 0);
+            XTest.fake_button_event(_display, button, false, 0);
         }
     }
 
-    private void send_key (string key) {
-        try {
-            Atspi.generate_keyboard_event (0, key,
-                                           Atspi.KeySynthType.STRING);
-        } catch (Error e) {
-            warning ("failed to generate keyboard event: %s", e.message);
-        }
-    }
-
-    private void send_keysym (uint key) {
-        uint keyval = 0;
-        if (key == 12) {
-            keyval = Gdk.keyval_from_name ("Return");
-        } else if (key == 1) {
-            keyval = Gdk.keyval_from_name ("BackSpace");
-        }
-
-        if (keyval == 0) {
-            warning ("could not identify key %u", key);
-            return;
-        }
-
-        debug ("keyval %x %s", keyval, Gdk.keyval_name (keyval));
-        try {
-            Atspi.generate_keyboard_event (keyval, null,
-                                           Atspi.KeySynthType.PRESSRELEASE
-                                           | Atspi.KeySynthType.SYM);
-        } catch (Error e) {
-            warning ("failed to generate keyboard event: %s", e.message);
-        }
+    private void send_key (uint keysym, Gdk.ModifierType mask) {
+        var code = _display.keysym_to_keycode(keysym);
+        send_modifiersevent(mask, true);
+        XTest.fake_key_event(_display, code, true, 0);
+        XTest.fake_key_event(_display, code, false, 0);
+        send_modifiersevent(mask, false);
     }
 }

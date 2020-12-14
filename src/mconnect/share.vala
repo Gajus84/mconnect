@@ -33,14 +33,18 @@ class ShareHandler : Object, PacketHandlerInterface {
     public static ShareHandler instance () {
         if (ShareHandler.DOWNLOADS == null) {
 
+            var downloaddir = Environment.get_user_special_dir (UserDirectory.DOWNLOAD);
+            if (downloaddir == null) {
+                downloaddir = Path.build_filename(Environment.get_home_dir(), "Downloads");
+            }
             ShareHandler.DOWNLOADS = Path.build_filename (
-                Environment.get_user_special_dir (UserDirectory.DOWNLOAD),
+                downloaddir,
                 "mconnect");
 
             if (DirUtils.create_with_parents (ShareHandler.DOWNLOADS,
                                               0700) == -1) {
-                warning ("failed to create downloads directory: %s",
-                         Posix.strerror (Posix.errno));
+                warning ("failed to create downloads directory: %s %s",
+                         Posix.strerror (Posix.errno), ShareHandler.DOWNLOADS);
             }
         }
 

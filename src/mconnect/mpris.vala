@@ -1,5 +1,4 @@
-/**
- * This program is free software; you can redistribute it and/or modify
+/*
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  *
@@ -366,7 +365,7 @@ class MprisHandler : Object, PacketHandlerInterface {
             string[] bus_names = _dbus_watcher.list_names ();
 
             foreach (string bus_name in bus_names) {
-                if (bus_name.has_prefix ("org.mpris.MediaPlayer2.")) {
+                if (bus_name.has_prefix ("org.mpris.MediaPlayer2.") && bus_name != "org.mpris.MediaPlayer2.playerctld") {
                     add_player (bus_name);
                 }
             }
