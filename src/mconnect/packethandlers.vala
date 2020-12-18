@@ -47,6 +47,7 @@ class PacketHandlers : Object {
         var share = ShareHandler.instance ();
         var mpris = MprisHandler.instance ();
         var clipboard = ClipboardHandler.instance ();
+        var findmyphone = FindMyPhoneHandler.instance ();
 
         hnd.@set (notification.get_pkt_type (), notification);
         hnd.@set (battery.get_pkt_type (), battery);
@@ -54,6 +55,7 @@ class PacketHandlers : Object {
         hnd.@set (mousepad.get_pkt_type (), mousepad);
         hnd.@set (ping.get_pkt_type (), ping);
         hnd.@set (runcommand.get_pkt_type (), runcommand);
+        hnd.@set (findmyphone.get_pkt_type (), findmyphone);
         hnd.@set (runqcommand.get_pkt_type (), runqcommand);
         hnd.@set (share.get_pkt_type (), share);
         hnd.@set (mpris.get_pkt_type (), mpris);

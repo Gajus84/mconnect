@@ -68,6 +68,8 @@ namespace Mconnect {
   allow-device <path>  Allow device
   show-device <path>   Show device details
 
+  find-device <path> Find the device
+
   share-url <path> <url>   Share URL with device
   share-text <path> <text>  Share text with device
   share-file <path> <file>  Share file with device
@@ -94,6 +96,7 @@ namespace Mconnect {
             Command[] commands = {
                 Command ("list-devices", 0, cl.cmd_list_devices),
                 Command ("allow-device", 1, cl.cmd_allow_device),
+                Command ("find-device", 1, cl.cmd_find_device),
                 Command ("show-device", 1, cl.cmd_show_device),
                 Command ("share-url", 2, cl.cmd_share_url),
                 Command ("share-text", 2, cl.cmd_share_text),
@@ -188,6 +191,16 @@ namespace Mconnect {
                 var dp = args[0];
                 var share = get_share (new ObjectPath (dp));
                 share.share_text (args[1]);
+                return 0;
+            });
+        }
+
+
+        private int cmd_find_device (string[] args) {
+            return checked_dbus_call (() => {
+                var dp = args[0];
+                var device = get_find_my_phone (new ObjectPath (dp));
+                device.find ();
                 return 0;
             });
         }
@@ -332,6 +345,18 @@ namespace Mconnect {
          * @return interface or null
          */
         private ShareIface ? get_share (ObjectPath path) throws IOError {
+            return get_mconnect_obj_proxy (path);
+        }
+
+
+        /**
+         * get_find_my_phone:
+         *
+         * Obtain DBus interface to Share of given device
+         *
+         * @return interface or null
+         */
+        private FindMyPhoneIface ? get_find_my_phone (ObjectPath path) throws IOError {
             return get_mconnect_obj_proxy (path);
         }
 

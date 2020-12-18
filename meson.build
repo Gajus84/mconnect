@@ -42,6 +42,8 @@ mconnect_src = [
 	'src/mconnect/notification.vala',
 	'src/mconnect/battery.vala',
 	'src/mconnect/battery-proxy.vala',
+	'src/mconnect/findmyphone-proxy.vala',
+	'src/mconnect/findmyphone.vala',
 	'src/mconnect/telephony.vala',
 	'src/mconnect/telephony-proxy.vala',
 	'src/mconnect/mousepad.vala',
@@ -83,6 +85,7 @@ mconnectctl_src = [
   'src/mconnectctl/device-manager-iface.vala',
   'src/mconnectctl/device-iface.vala',
   'src/mconnectctl/share-iface.vala',
+  'src/mconnectctl/findmyphone-iface.vala',
   'src/mconnectctl/telephony-iface.vala',
 ]
 executable('mconnectctl', mconnectctl_src,
