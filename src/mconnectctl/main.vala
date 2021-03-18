@@ -67,6 +67,7 @@ namespace Mconnect {
   list-devices         List devices
   allow-device <path>  Allow device
   show-device <path>   Show device details
+  show-battery <path>   Show device battery & charging
 
   find-device <path> Find the device
 
@@ -98,6 +99,7 @@ namespace Mconnect {
                 Command ("allow-device", 1, cl.cmd_allow_device),
                 Command ("find-device", 1, cl.cmd_find_device),
                 Command ("show-device", 1, cl.cmd_show_device),
+                Command ("show-battery", 1, cl.cmd_show_battery),
                 Command ("share-url", 2, cl.cmd_share_url),
                 Command ("share-text", 2, cl.cmd_share_text),
                 Command ("share-file", 2, cl.cmd_share_file),
@@ -140,6 +142,7 @@ namespace Mconnect {
                     }
 
                     debug ("running callback");
+                    debug("TEST");
                     return cmden.clbk (command_args);
                 }
             }
@@ -268,6 +271,18 @@ namespace Mconnect {
             });
         }
 
+        private int cmd_show_battery(string[] args) {
+            debug("DEBUG_0");
+            return checked_dbus_call (() => {
+                var bt = get_battery (new ObjectPath (args[0]));
+
+                stdout.printf ("Level: %u\n" +
+                               "Charging: %d\n",
+                               bt.level,
+                               bt.charging);
+                return 0;
+            });
+        }
         private delegate int CheckDBusCallFunc () throws Error;
 
         /**
@@ -334,6 +349,18 @@ namespace Mconnect {
          * @return interface or null
          */
         private DeviceIface ? get_device (ObjectPath path) throws IOError {
+            return get_mconnect_obj_proxy (path);
+        }
+
+        /**
+         * get_device:
+         * @path device object path
+         *
+         * Obtain DBus interface to Device.Battery
+         *
+         * @return interface or null
+         */
+        private BatteryIface ? get_battery (ObjectPath path) throws IOError {
             return get_mconnect_obj_proxy (path);
         }
 
