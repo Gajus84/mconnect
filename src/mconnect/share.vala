@@ -207,7 +207,7 @@ class ShareHandler : Object, PacketHandlerInterface {
         }
         debug ("allocated listener on port %u", port);
 
-        var t = new UploadTransfer (dev, listener, input, size);
+        var t = new UploadTransfer (dev, listener, input, size, file.get_basename());
 
         Core.instance ().transfer_manager.push_job (t);
 

@@ -28,16 +28,24 @@ class UploadTransfer : TransferInterface, Object {
     private SocketConnection conn = null;
     private uint64 transferred = 0;
     private uint64 size;
+    private Notify.Notification notif = null;
+    private string filename = null;
+    private string title = null;
+    private string icon = null;
 
     private const int WAIT_TIMEOUT = 30;
 
     public UploadTransfer (Device dev, SocketService listener,
-                           FileInputStream source, uint64 size) {
+                           FileInputStream source, uint64 size, string filename) {
         this.listener = listener;
         this.cancellable = new Cancellable ();
         this.device = dev;
         this.finstream = source;
         this.size = size;
+        this.notif = new Notify.Notification ("Transfer", "Start transfer",
+                                              "phone");
+        this.title = "Transfer %s".printf(filename);
+        this.icon = "phone";
     }
 
     public async bool start_async () {
@@ -110,10 +118,19 @@ class UploadTransfer : TransferInterface, Object {
         debug ("connected, start transfer");
         this.job = new IOCopyJob (this.finstream,
                                   this.tls_conn.output_stream);
+        var lastupdate = (int64)0;
         this.job.progress.connect ((t, done) => {
             int percent = (int) (100.0 * ((double) done / (double) this.size));
-            debug ("progress: %s/%s %d%%",
-                   format_size (done), format_size (this.size), percent);
+            string message = "progress: %s/%s".printf(
+                   format_size (done), format_size (this.size));
+            debug (message);
+            this.notif.update(this.title, message, this.icon);
+            this.notif.set_hint("value", percent);
+            var now = new DateTime.now_local().to_unix();
+            if (now - lastupdate >= 2) {
+                lastupdate = now;
+                this.show_notification();
+            }
             this.transferred = done;
         });
 
@@ -123,8 +140,18 @@ class UploadTransfer : TransferInterface, Object {
                                     this.job_complete);
     }
 
+    private void show_notification() {
+        try {
+            this.notif.show ();
+        } catch (Error e) {
+            critical ("failed to show notification: %s", e.message);
+        }
+    }
+
     private void job_complete (Object ? obj, AsyncResult res) {
         info ("transfer finished");
+        this.notif.update(this.title, "Complete", this.icon);
+        this.show_notification();
         try {
             var rcvd_bytes = this.job.start_async.end (res);
             debug ("transfer done, got %s", format_size (rcvd_bytes));
