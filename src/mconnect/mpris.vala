@@ -115,6 +115,12 @@ class MprisHandler : Object, PacketHandlerInterface {
                 case "PlayPause":
                     mpris_player.play_pause ();
                     break;
+                case "Pause":
+                    mpris_player.pause ();
+                    break;
+                case "Play":
+                    mpris_player.play ();
+                    break;
                 case "Previous":
                     mpris_player.previous ();
                     break;

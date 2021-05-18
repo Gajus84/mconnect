@@ -36,6 +36,8 @@ public interface MprisPlayerProxy : Object {
     public abstract void next () throws Error;
     public abstract void previous () throws Error;
     public abstract void play_pause () throws Error;
+    public abstract void play () throws Error;
+    public abstract void pause () throws Error;
     public abstract void seek (int64 Offset) throws Error;
 
     public abstract string playback_status {
