@@ -265,7 +265,7 @@ class DeviceChannel : Object {
             return false;
         }
 
-        vdebug ("received line: %s", data);
+        debug ("received line: %s", data);
 
         Packet pkt = Packet.new_from_data (data);
         if (pkt == null) {

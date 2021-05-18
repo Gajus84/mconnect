@@ -44,13 +44,11 @@ class IOCopyJob : Object {
                                                          Priority.DEFAULT,
                                                          cancel);
 
-            vdebug ("read %d bytes", data.length);
+            debug ("read %d bytes", data.length);
             if (data.length == 0) {
                 break;
             }
-            yield this.to.write_bytes_async (data, Priority.DEFAULT,
-                                             cancel);
-
+            yield this.to.write_all_async(data.get_data(), Priority.DEFAULT, cancel, null);
             bytes_done += data.length;
             this.progress (bytes_done);
 
@@ -61,6 +59,7 @@ class IOCopyJob : Object {
                 chunk_size = max_chunk_size;
         }
 
+        yield this.to.flush_async();
         debug ("transfer done, got %s bytes", format_size (bytes_done));
         return bytes_done;
     }
