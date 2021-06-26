@@ -80,10 +80,23 @@ class TelephonyHandler : Object, PacketHandlerInterface {
 
             // telephony packets have no time information
             var time = new DateTime.now_local ();
-            number = "%s %s".printf (time.format ("%X"), number);
+            string info = "";
+            if (pkt.body.has_member("contactName")) {
+                info = "%s %s (%s)".printf (time.format ("%X"), pkt.body.get_string_member("contactName"), number);
+            } else {
+                info = "%s %s".printf (time.format ("%X"), number);
+            }
+            var notif = new Notify.Notification (summary, info, "phone");
 
-            var notif = new Notify.Notification (summary, number,
-                                                 "phone");
+            if (pkt.body.has_member("phoneThumbnail")) {
+                var data = GLib.Base64.decode(pkt.body.get_string_member("phoneThumbnail"));
+                var stream = new MemoryInputStream.from_data( data );
+                try {
+                    notif.set_icon_from_pixbuf(new Gdk.Pixbuf.from_stream( stream ));
+                } catch (Error e) {
+                    critical ("failed to load image data: %s", e.message);
+                }
+            }
             try {
                 notif.show ();
             } catch (Error e) {
