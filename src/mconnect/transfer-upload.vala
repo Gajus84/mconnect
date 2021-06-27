@@ -29,7 +29,6 @@ class UploadTransfer : TransferInterface, Object {
     private uint64 transferred = 0;
     private uint64 size;
     private Notify.Notification notif = null;
-    private string filename = null;
     private string title = null;
     private string icon = null;
 

@@ -48,7 +48,31 @@ class NotificationHandler : Object, PacketHandlerInterface {
             return;
         }
         debug ("got notification packet");
+        string tempfile = null;
+        if (pkt.payload != null) {
+            GLib.FileUtils.open_tmp("mconnect-icon-XXXXXX", out tempfile);
+            debug ("file: %s size: %s", tempfile, format_size (pkt.payload.size));
 
+            var t = new DownloadTransfer (
+                dev,
+                new InetSocketAddress (dev.host,
+                                       (uint16) pkt.payload.port),
+                pkt.payload.size,
+                tempfile);
+
+            Core.instance ().transfer_manager.push_job (t);
+            t.finished.connect ((n) => {
+                this.handle_pkt(dev, pkt, tempfile);
+                g_free(tempfile);
+            });
+            t.start_async.begin ();
+        } else {
+            this.handle_pkt(dev, pkt, null);
+        }
+    }
+
+
+    public void handle_pkt (Device dev, Packet pkt, string? filename) {
         // get application ID
         string id = pkt.body.get_string_member ("id");
 
@@ -117,6 +141,23 @@ class NotificationHandler : Object, PacketHandlerInterface {
 
         var notif = new Notify.Notification (app, ticker,
                                              "phone");
+
+        // Set Image
+        if (filename != null) {
+            File file = File.new_for_path (filename);
+            try {
+                FileInputStream @is = file.read ();
+                DataInputStream dis = new DataInputStream (@is);
+                try {
+                    notif.set_icon_from_pixbuf(new Gdk.Pixbuf.from_stream( dis ));
+                    file.@delete();
+                } catch (Error e) {
+                    critical ("failed to load image data: %s", e.message);
+                }
+            } catch (Error e) {
+                print ("Error: %s\n", e.message);
+            }
+        }
         try {
             // react to closed signal
             notif.closed.connect ((n) => {
