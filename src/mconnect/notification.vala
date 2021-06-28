@@ -50,7 +50,13 @@ class NotificationHandler : Object, PacketHandlerInterface {
         debug ("got notification packet");
         string tempfile = null;
         if (pkt.payload != null) {
-            GLib.FileUtils.open_tmp("mconnect-icon-XXXXXX", out tempfile);
+            try {
+                GLib.FileUtils.open_tmp("mconnect-icon-XXXXXX", out tempfile);
+            } catch (Error e) {
+                critical ("failed to create tmp file: %s", e.message);
+                this.handle_pkt(dev, pkt, null);
+                return;
+            }
             debug ("file: %s size: %s", tempfile, format_size (pkt.payload.size));
 
             var t = new DownloadTransfer (
