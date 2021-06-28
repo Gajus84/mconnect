@@ -88,7 +88,7 @@ class RunRequestCommandHandler : Object, PacketHandlerInterface {
             builder.set_member_name ("name");
             builder.add_string_value (value);
             builder.set_member_name ("command");
-            builder.add_string_value ("...");
+            builder.add_string_value (core.config.get_command(value));
             builder.end_object();
 
         }
