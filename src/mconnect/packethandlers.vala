@@ -40,26 +40,30 @@ class PacketHandlers : Object {
         var notification = NotificationHandler.instance ();
         var battery = BatteryHandler.instance ();
         var telephony = TelephonyHandler.instance ();
-        var mousepad = MousepadHandler.instance ();
         var ping = PingHandler.instance ();
         var runcommand = RunCommandHandler.instance ();
         var runqcommand = RunRequestCommandHandler.instance ();
         var share = ShareHandler.instance ();
         var mpris = MprisHandler.instance ();
-        var clipboard = ClipboardHandler.instance ();
         var findmyphone = FindMyPhoneHandler.instance ();
 
         hnd.@set (notification.get_pkt_type (), notification);
         hnd.@set (battery.get_pkt_type (), battery);
         hnd.@set (telephony.get_pkt_type (), telephony);
-        hnd.@set (mousepad.get_pkt_type (), mousepad);
         hnd.@set (ping.get_pkt_type (), ping);
         hnd.@set (runcommand.get_pkt_type (), runcommand);
         hnd.@set (findmyphone.get_pkt_type (), findmyphone);
         hnd.@set (runqcommand.get_pkt_type (), runqcommand);
         hnd.@set (share.get_pkt_type (), share);
         hnd.@set (mpris.get_pkt_type (), mpris);
-        hnd.@set (clipboard.get_pkt_type (), clipboard);
+
+        var display = GLib.Environment.get_variable("DISPLAY");
+        if (display != null ) {
+          var clipboard = ClipboardHandler.instance ();
+          hnd.@set (clipboard.get_pkt_type (), clipboard);
+          var mousepad = MousepadHandler.instance ();
+          hnd.@set (mousepad.get_pkt_type (), mousepad);
+        }
 
         return hnd;
     }

@@ -18,11 +18,11 @@
 public static int main (string[] args) {
     var app = new Mconn.Application ();
 
-    // needed for mousepad protocol handler
-    Gdk.init (ref args);
-
     // needed for clipboard sharing
-    Gtk.init (ref args);
+    var display = GLib.Environment.get_variable("DIPLAY");
+    if (display != null) {
+      Gtk.init_check (ref args);
+    }
 
     return app.run (args);
 }
