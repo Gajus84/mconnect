@@ -19,9 +19,9 @@ public static int main (string[] args) {
     var app = new Mconn.Application ();
 
     // needed for clipboard sharing
-    var display = GLib.Environment.get_variable("DIPLAY");
+    var display = GLib.Environment.get_variable("DISPLAY");
     if (display != null) {
-      Gtk.init_check (ref args);
+      Gtk.init (ref args);
     }
 
     return app.run (args);
